@@ -1,0 +1,268 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+
+/* HEADER */
+
+.header {
+  background: white;
+  text-align: center;
+  padding: 45px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.logo {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.header p {
+  color: #667085;
+  font-size: 18px;
+}
+
+
+/* MAIN */
+
+.main {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+
+/* SEARCH */
+
+.search-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.search-card label {
+  display: block;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.search-card input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  font-size: 17px;
+  outline: none;
+}
+
+.search-card input:focus {
+  border-color: #2563eb;
+}
+
+.search-card button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.search-card button:hover {
+  background: #1d4ed8;
+}
+
+.search-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* LOADING */
+
+.loading {
+  margin-top: 25px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+}
+
+
+/* RESULTS */
+
+.results-card {
+  margin-top: 30px;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.product-header h2 {
+  margin-bottom: 5px;
+}
+
+.product-header p {
+  color: #667085;
+}
+
+
+/* WINNER */
+
+.winner {
+  margin-top: 25px;
+  padding: 25px;
+  border-radius: 14px;
+  background: #ecfdf3;
+  border: 1px solid #a7f3d0;
+  text-align: center;
+}
+
+.winner-label {
+  color: #047857;
+  font-weight: bold;
+}
+
+.winner-platform {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.winner-price {
+  font-size: 34px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+
+/* SAVING */
+
+.saving {
+  margin-top: 20px;
+  padding: 18px;
+  background: #eff6ff;
+  border-radius: 10px;
+}
+
+.saving strong {
+  margin-left: 8px;
+}
+
+
+/* PRICE LIST */
+
+.price-list {
+  margin-top: 15px;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.price-row.cheapest {
+  background: #f0fdf4;
+  border-radius: 10px;
+}
+
+.platform {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.available {
+  font-size: 14px;
+  color: #047857;
+}
+
+.unavailable {
+  font-size: 14px;
+  color: #b91c1c;
+}
+
+.price {
+  font-size: 21px;
+  font-weight: bold;
+}
+
+
+/* UNAVAILABLE */
+
+.unavailable-message {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 10px;
+}
+
+
+/* ERROR */
+
+.error {
+  margin-top: 25px;
+  padding: 20px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 10px;
+}
+
+
+/* FOOTER */
+
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #667085;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+  .logo {
+    font-size: 28px;
+  }
+
+  .header {
+    padding: 35px 15px;
+  }
+
+  .main {
+    margin: 25px auto;
+  }
+
+  .search-card,
+  .results-card {
+    padding: 20px;
+  }
+
+  .price-row {
+    padding: 15px 5px;
+  }
+
+}

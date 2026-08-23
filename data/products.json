@@ -1,0 +1,100 @@
+[
+    {
+        "platform": "Blinkit",
+        "product": "Amul Taaza Milk 1L",
+        "brand": "Amul",
+        "quantity": 1,
+        "unit": "L",
+        "price": 68
+    },
+    {
+        "platform": "Zepto",
+        "product": "Amul Taaza Milk 1L",
+        "brand": "Amul",
+        "quantity": 1,
+        "unit": "L",
+        "price": 66
+    },
+    {
+        "platform": "Instamart",
+        "product": "Amul Taaza Milk 1L",
+        "brand": "Amul",
+        "quantity": 1,
+        "unit": "L",
+        "price": 69
+    },
+    {
+        "platform": "BigBasket",
+        "product": "Amul Taaza Milk 1L",
+        "brand": "Amul",
+        "quantity": 1,
+        "unit": "L",
+        "price": 67
+    },
+
+    {
+        "platform": "Blinkit",
+        "product": "Tata Salt 1kg",
+        "brand": "Tata",
+        "quantity": 1,
+        "unit": "kg",
+        "price": 28
+    },
+    {
+        "platform": "Zepto",
+        "product": "Tata Salt 1kg",
+        "brand": "Tata",
+        "quantity": 1,
+        "unit": "kg",
+        "price": 26
+    },
+    {
+        "platform": "Instamart",
+        "product": "Tata Salt 1kg",
+        "brand": "Tata",
+        "quantity": 1,
+        "unit": "kg",
+        "price": 29
+    },
+    {
+        "platform": "BigBasket",
+        "product": "Tata Salt 1kg",
+        "brand": "Tata",
+        "quantity": 1,
+        "unit": "kg",
+        "price": 27
+    },
+
+    {
+        "platform": "Blinkit",
+        "product": "Fortune Sunflower Oil 1L",
+        "brand": "Fortune",
+        "quantity": 1,
+        "unit": "L",
+        "price": 145
+    },
+    {
+        "platform": "Zepto",
+        "product": "Fortune Sunflower Oil 1L",
+        "brand": "Fortune",
+        "quantity": 1,
+        "unit": "L",
+        "price": 139
+    },
+    {
+        "platform": "Instamart",
+        "product": "Fortune Sunflower Oil 1L",
+        "brand": "Fortune",
+        "quantity": 1,
+        "unit": "L",
+        "price": 142
+    },
+    {
+        "platform": "BigBasket",
+        "product": "Fortune Sunflower Oil 1L",
+        "brand": "Fortune",
+        "quantity": 1,
+        "unit": "L",
+        "price": 140
+    }
+]
