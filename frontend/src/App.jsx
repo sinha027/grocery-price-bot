@@ -74,7 +74,9 @@ function App() {
   return (
     <div className="app">
 
-      {/* NAVBAR */}
+      {/* =====================================================
+          NAVBAR
+          ===================================================== */}
 
       <nav className="navbar">
         <div className="nav-inner">
@@ -94,17 +96,37 @@ function App() {
           </div>
 
           <div className="nav-right">
+
             <span className="privacy-badge">
               <span className="privacy-dot"></span>
               No account required
             </span>
+
+            <a
+              className="creator-watermark"
+              href="https://www.linkedin.com/in/sinha027/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Built by Vivek Sinha on LinkedIn"
+            >
+              <span className="creator-name">
+                Built by Vivek Sinha
+              </span>
+
+              <span className="creator-link">
+                · LinkedIn ↗
+              </span>
+            </a>
+
           </div>
 
         </div>
       </nav>
 
 
-      {/* HERO */}
+      {/* =====================================================
+          HERO
+          ===================================================== */}
 
       <main>
 
@@ -225,7 +247,9 @@ function App() {
         </section>
 
 
-        {/* RESULTS */}
+        {/* =====================================================
+            RESULTS
+            ===================================================== */}
 
         <section className="results-section">
 
@@ -236,12 +260,21 @@ function App() {
 
           {result && !result.success && (
             <div className="message-card error-card">
-              <div className="message-icon">!</div>
+
+              <div className="message-icon">
+                !
+              </div>
 
               <div>
-                <strong>Something needs your attention</strong>
-                <p>{result.message}</p>
+                <strong>
+                  Something needs your attention
+                </strong>
+
+                <p>
+                  {result.message}
+                </p>
               </div>
+
             </div>
           )}
 
@@ -269,7 +302,9 @@ function App() {
       </main>
 
 
-      {/* FOOTER */}
+      {/* =====================================================
+          FOOTER
+          ===================================================== */}
 
       <footer className="footer">
 
@@ -344,7 +379,6 @@ function EmptyState() {
    ============================================================ */
 
 function ComparisonResult({ result }) {
-
   const cheapest = result.cheapest;
 
   const available = result.prices.filter(
@@ -357,8 +391,6 @@ function ComparisonResult({ result }) {
 
   return (
     <div className="comparison-container">
-
-      {/* RESULT HEADER */}
 
       <div className="result-heading">
 
@@ -473,7 +505,6 @@ function ComparisonResult({ result }) {
       {/* UNAVAILABLE */}
 
       {unavailable.length > 0 && (
-
         <>
           <div className="section-heading unavailable-heading">
 
@@ -488,7 +519,6 @@ function ComparisonResult({ result }) {
 
           </div>
 
-
           <div className="platform-grid">
 
             {unavailable.map((item) => (
@@ -501,11 +531,8 @@ function ComparisonResult({ result }) {
 
           </div>
         </>
-
       )}
 
-
-      {/* DISCLAIMER */}
 
       <div className="result-footnote">
 
@@ -525,15 +552,12 @@ function ComparisonResult({ result }) {
    PLATFORM CARD
    ============================================================ */
 
-function PlatformCard({
-  item,
-  winner
-}) {
+function PlatformCard({ item, winner }) {
 
   const meta =
     PLATFORM_META[item.platform] || {
       icon: "•",
-      className: "default"
+      className: "default",
     };
 
   return (
@@ -589,11 +613,7 @@ function PlatformCard({
       <div className="platform-bottom">
 
         <div className="platform-price">
-
-          {item.available
-            ? `₹${item.price}`
-            : `₹${item.price}`}
-
+          ₹{item.price}
         </div>
 
         <div className="platform-location">
@@ -661,6 +681,7 @@ function UnavailableResult({ result }) {
           <PlatformCard
             key={item.platform}
             item={item}
+            winner={false}
           />
         ))}
 
