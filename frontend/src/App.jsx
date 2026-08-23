@@ -40,7 +40,7 @@ function App() {
 
     try {
       const url =
-        `http://localhost:8000/compare` +
+        `https://grocery-price-bot-umiu.onrender.com/compare` +
         `?search=${encodeURIComponent(search)}` +
         `&location=${encodeURIComponent(location)}`;
 
