@@ -72,7 +72,7 @@ a {
 .navbar {
   position: relative;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid var(--border-soft);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -103,6 +103,8 @@ a {
   display: grid;
   place-items: center;
 
+  flex: 0 0 48px;
+
   border-radius: 14px;
 
   background:
@@ -112,7 +114,7 @@ a {
       #078d5c
     );
 
-  color: white;
+  color: #ffffff;
 
   font-size: 20px;
   font-weight: 900;
@@ -123,9 +125,11 @@ a {
 
 .brand-name {
   color: var(--text);
+
   font-size: 20px;
   line-height: 1.1;
   font-weight: 850;
+
   letter-spacing: -0.6px;
 }
 
@@ -135,22 +139,31 @@ a {
 
 .brand-caption {
   margin-top: 5px;
+
   color: var(--muted);
+
   font-size: 12px;
   font-weight: 500;
 }
+
+/* ============================================================
+   NAV RIGHT
+   ============================================================ */
 
 .nav-right {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
   gap: 18px;
+
   min-width: 0;
 }
 
 .privacy-badge {
   display: inline-flex;
   align-items: center;
+
   gap: 9px;
 
   padding: 10px 15px;
@@ -158,7 +171,7 @@ a {
   border: 1px solid var(--border);
   border-radius: 999px;
 
-  background: #fff;
+  background: #ffffff;
 
   color: #59667b;
 
@@ -181,42 +194,41 @@ a {
 }
 
 /* ============================================================
-   VIVEK SINHA WATERMARK
+   VIVEK SINHA CREATOR WATERMARK
    ============================================================ */
 
 .vivek-watermark {
   display: inline-flex !important;
-  align-items: center;
-  gap: 5px;
+  align-items: center !important;
+  gap: 6px !important;
 
-  margin-left: 4px;
-  padding: 8px 11px;
+  margin-top: 8px !important;
+  padding: 7px 11px !important;
 
-  border-radius: 999px;
+  border: 1px solid #cfeade !important;
+  border-radius: 999px !important;
 
-  background: rgba(245, 250, 247, 0.95);
-
-  border: 1px solid rgba(8, 116, 67, 0.1);
+  background: #f1faf6 !important;
 
   color: #667085 !important;
 
-  font-size: 12px;
-  font-weight: 600;
-
-  line-height: 1;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
 
   text-decoration: none !important;
 
-  white-space: nowrap;
+  white-space: nowrap !important;
 
-  position: relative;
-  z-index: 9999;
+  position: relative !important;
+  z-index: 999999 !important;
 
   opacity: 1 !important;
   visibility: visible !important;
 
   transition:
     color 0.2s ease,
+    background 0.2s ease,
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
@@ -227,20 +239,22 @@ a {
 
 .vivek-watermark .creator-link {
   color: #087443 !important;
-  font-weight: 800;
+  font-weight: 900 !important;
 }
 
 .vivek-watermark:hover {
   color: #142033 !important;
 
+  background: #e7f8ef !important;
+
   transform: translateY(-1px);
 
   box-shadow:
-    0 5px 16px rgba(8, 116, 67, 0.1);
+    0 6px 18px rgba(8, 116, 67, 0.12);
 }
 
 .vivek-watermark:hover .creator-link {
-  text-decoration: underline;
+  text-decoration: underline !important;
 }
 
 /* ============================================================
@@ -303,12 +317,14 @@ a {
 .glow-one {
   top: -280px;
   left: 12%;
+
   background: rgba(31, 190, 133, 0.24);
 }
 
 .glow-two {
   top: -250px;
   right: 10%;
+
   background: rgba(75, 145, 245, 0.16);
 }
 
@@ -319,6 +335,7 @@ a {
 .eyebrow {
   display: inline-flex;
   align-items: center;
+
   gap: 10px;
 
   padding: 11px 17px;
@@ -456,6 +473,7 @@ a {
 
 .field-content {
   min-width: 0;
+
   flex: 1;
 }
 
@@ -490,17 +508,19 @@ a {
 
 .field-content input::placeholder {
   color: #94a0b4;
+
   font-weight: 500;
 }
 
 .search-divider {
   width: 1px;
   height: 54px;
+
   background: #e7ece9;
 }
 
 /* ============================================================
-   BUTTON
+   COMPARE BUTTON
    ============================================================ */
 
 .compare-button {
@@ -522,7 +542,7 @@ a {
       #078d5c
     );
 
-  color: white;
+  color: #ffffff;
 
   font-size: 16px;
   font-weight: 800;
@@ -545,6 +565,7 @@ a {
 
 .compare-button:disabled {
   cursor: wait;
+
   opacity: 0.75;
 }
 
@@ -558,7 +579,7 @@ a {
 
   border: 2px solid rgba(255, 255, 255, 0.35);
 
-  border-top-color: white;
+  border-top-color: #ffffff;
 
   border-radius: 50%;
 
@@ -583,6 +604,7 @@ a {
 
 .search-note span {
   margin-right: 6px;
+
   color: #10b77a;
 }
 
@@ -649,13 +671,15 @@ a {
 }
 
 .location-text {
-  font-weight: 800;
   color: #45536a;
+
+  font-weight: 800;
 }
 
 .checked-badge {
   display: inline-flex;
   align-items: center;
+
   gap: 8px;
 
   padding: 12px 16px;
@@ -679,7 +703,7 @@ a {
 }
 
 /* ============================================================
-   WINNER
+   WINNER CARD
    ============================================================ */
 
 .winner-card {
@@ -716,6 +740,7 @@ a {
 .winner-left {
   display: flex;
   align-items: center;
+
   gap: 24px;
 }
 
@@ -728,7 +753,7 @@ a {
 
   border-radius: 18px;
 
-  background: white;
+  background: #ffffff;
 
   font-size: 29px;
 
@@ -819,11 +844,13 @@ a {
 .section-heading > div {
   display: flex;
   align-items: center;
+
   gap: 10px;
 }
 
 .section-heading > span {
   color: #98a4b6;
+
   font-weight: 600;
 }
 
@@ -868,7 +895,7 @@ a {
 
   border-radius: 20px;
 
-  background: white;
+  background: #ffffff;
 
   box-shadow: var(--shadow-sm);
 
@@ -895,12 +922,14 @@ a {
 
 .unavailable-card {
   opacity: 0.64;
+
   background: #fafbfb;
 }
 
 .platform-top {
   display: flex;
   align-items: center;
+
   gap: 14px;
 }
 
@@ -923,7 +952,7 @@ a {
 }
 
 .platform-logo.blinkit {
-  color: #111;
+  color: #111111;
   background: #fff2cc;
 }
 
@@ -943,7 +972,7 @@ a {
 }
 
 .platform-logo.amazon {
-  color: #111;
+  color: #111111;
   background: #f2f2f2;
 }
 
@@ -962,8 +991,14 @@ a {
   background: #fff0f0;
 }
 
+.platform-logo.default {
+  color: #53627a;
+  background: #f1f4f8;
+}
+
 .platform-info {
   min-width: 0;
+
   flex: 1;
 }
 
@@ -1058,7 +1093,7 @@ a {
 }
 
 /* ============================================================
-   FOOTNOTE
+   RESULT FOOTNOTE
    ============================================================ */
 
 .result-footnote {
@@ -1100,7 +1135,7 @@ a {
 
   border-radius: 24px;
 
-  background: white;
+  background: #ffffff;
 
   box-shadow: var(--shadow-md);
 }
@@ -1260,7 +1295,7 @@ a {
 }
 
 /* ============================================================
-   UNAVAILABLE
+   UNAVAILABLE RESULT
    ============================================================ */
 
 .all-unavailable {
@@ -1274,7 +1309,7 @@ a {
 
   border-radius: 22px;
 
-  background: white;
+  background: #ffffff;
 }
 
 .all-unavailable-icon {
@@ -1354,7 +1389,7 @@ a {
 }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE - TABLET
    ============================================================ */
 
 @media (max-width: 1000px) {
@@ -1374,6 +1409,10 @@ a {
     height: 78px;
   }
 }
+
+/* ============================================================
+   RESPONSIVE - SMALL TABLET
+   ============================================================ */
 
 @media (max-width: 820px) {
   .nav-inner {
@@ -1399,11 +1438,11 @@ a {
   .platform-grid {
     grid-template-columns: 1fr;
   }
-
-  .vivek-watermark {
-    font-size: 11px;
-  }
 }
+
+/* ============================================================
+   RESPONSIVE - MOBILE
+   ============================================================ */
 
 @media (max-width: 620px) {
   .nav-inner,
@@ -1421,6 +1460,8 @@ a {
     width: 42px;
     height: 42px;
 
+    flex-basis: 42px;
+
     border-radius: 12px;
   }
 
@@ -1432,17 +1473,9 @@ a {
     font-size: 11px;
   }
 
-  .creator-name {
-    display: none;
-  }
-
-  .vivek-watermark {
-    font-size: 10px;
-    padding: 7px 9px;
-  }
-
   .hero {
     min-height: auto;
+
     padding: 70px 0 80px;
   }
 
@@ -1523,7 +1556,16 @@ a {
 
     gap: 8px;
   }
+
+  .vivek-watermark {
+    font-size: 10px !important;
+    padding: 6px 9px !important;
+  }
 }
+
+/* ============================================================
+   RESPONSIVE - SMALL MOBILE
+   ============================================================ */
 
 @media (max-width: 420px) {
   .brand-caption {
@@ -1554,6 +1596,7 @@ a {
   }
 
   .vivek-watermark {
-    padding: 6px 8px;
+    margin-top: 6px !important;
+    padding: 6px 8px !important;
   }
 }
