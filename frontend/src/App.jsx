@@ -58,7 +58,7 @@ function App() {
       setResult({
         success: false,
         message:
-          "We couldn't connect to the comparison service. Make sure the backend is running.",
+          "We couldn't connect to the comparison service. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -73,14 +73,10 @@ function App() {
 
   return (
     <div className="app">
-
-      {/* =====================================================
-          NAVBAR
-          ===================================================== */}
+      {/* NAVBAR */}
 
       <nav className="navbar">
         <div className="nav-inner">
-
           <div className="brand">
             <div className="brand-mark">G</div>
 
@@ -96,17 +92,16 @@ function App() {
           </div>
 
           <div className="nav-right">
-
             <span className="privacy-badge">
               <span className="privacy-dot"></span>
               No account required
             </span>
 
             <a
-              className="creator-watermark"
               href="https://www.linkedin.com/in/sinha027/"
               target="_blank"
               rel="noopener noreferrer"
+              className="vivek-watermark"
               aria-label="Built by Vivek Sinha on LinkedIn"
             >
               <span className="creator-name">
@@ -117,26 +112,18 @@ function App() {
                 · LinkedIn ↗
               </span>
             </a>
-
           </div>
-
         </div>
       </nav>
 
-
-      {/* =====================================================
-          HERO
-          ===================================================== */}
+      {/* HERO */}
 
       <main>
-
         <section className="hero">
-
           <div className="hero-glow glow-one"></div>
           <div className="hero-glow glow-two"></div>
 
           <div className="hero-content">
-
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
               Smart grocery price comparison
@@ -153,24 +140,19 @@ function App() {
               grocery and quick-commerce platforms in one place.
             </p>
 
-
-            {/* SEARCH PANEL */}
+            {/* SEARCH */}
 
             <div className="search-panel">
-
               <div className="search-field">
-
-                <div className="field-icon">
-                  ⌕
-                </div>
+                <div className="field-icon">⌕</div>
 
                 <div className="field-content">
-
                   <label>
                     WHAT ARE YOU LOOKING FOR?
                   </label>
 
                   <input
+                    type="text"
                     value={search}
                     onChange={(event) =>
                       setSearch(event.target.value)
@@ -178,28 +160,23 @@ function App() {
                     onKeyDown={handleKeyDown}
                     placeholder="Try “Amul Taaza Milk 1L”"
                   />
-
                 </div>
-
               </div>
-
 
               <div className="search-divider"></div>
 
-
               <div className="location-field">
-
                 <div className="field-icon location-icon">
                   ⌖
                 </div>
 
                 <div className="field-content">
-
                   <label>
                     YOUR LOCATION
                   </label>
 
                   <input
+                    type="text"
                     value={location}
                     onChange={(event) =>
                       setLocation(
@@ -210,13 +187,11 @@ function App() {
                     placeholder="PIN code"
                     maxLength={6}
                   />
-
                 </div>
-
               </div>
 
-
               <button
+                type="button"
                 className="compare-button"
                 onClick={comparePrices}
                 disabled={loading}
@@ -229,55 +204,39 @@ function App() {
                 ) : (
                   <>
                     Compare prices
-                    <span className="button-arrow">→</span>
+                    <span className="button-arrow">
+                      →
+                    </span>
                   </>
                 )}
               </button>
-
             </div>
-
 
             <div className="search-note">
               <span>✦</span>
               No signup. No phone number. No payment details.
             </div>
-
           </div>
-
         </section>
 
-
-        {/* =====================================================
-            RESULTS
-            ===================================================== */}
+        {/* RESULTS */}
 
         <section className="results-section">
-
-          {loading && (
-            <LoadingState />
-          )}
-
+          {loading && <LoadingState />}
 
           {result && !result.success && (
             <div className="message-card error-card">
-
-              <div className="message-icon">
-                !
-              </div>
+              <div className="message-icon">!</div>
 
               <div>
                 <strong>
                   Something needs your attention
                 </strong>
 
-                <p>
-                  {result.message}
-                </p>
+                <p>{result.message}</p>
               </div>
-
             </div>
           )}
-
 
           {result &&
             result.success &&
@@ -285,43 +244,28 @@ function App() {
               <UnavailableResult result={result} />
             )}
 
-
           {result &&
             result.success &&
             result.available_anywhere === true && (
               <ComparisonResult result={result} />
             )}
 
-
-          {!result && !loading && (
-            <EmptyState />
-          )}
-
+          {!result && !loading && <EmptyState />}
         </section>
-
       </main>
 
-
-      {/* =====================================================
-          FOOTER
-          ===================================================== */}
+      {/* FOOTER */}
 
       <footer className="footer">
-
-        <div>
-          GroceryCompare
-        </div>
+        <div>GroceryCompare</div>
 
         <span>
           Compare smarter. Shop better.
         </span>
-
       </footer>
-
     </div>
   );
 }
-
 
 /* ============================================================
    LOADING
@@ -330,23 +274,18 @@ function App() {
 function LoadingState() {
   return (
     <div className="loading-card">
-
       <div className="loading-orbit">
         <div></div>
       </div>
 
-      <h3>
-        Comparing prices
-      </h3>
+      <h3>Comparing prices</h3>
 
       <p>
         Checking available platforms for your location...
       </p>
-
     </div>
   );
 }
-
 
 /* ============================================================
    EMPTY STATE
@@ -355,10 +294,7 @@ function LoadingState() {
 function EmptyState() {
   return (
     <div className="empty-state">
-
-      <div className="empty-icon">
-        ✦
-      </div>
+      <div className="empty-icon">✦</div>
 
       <h3>
         Your best deal is one search away
@@ -368,11 +304,9 @@ function EmptyState() {
         Search for a product and enter your PIN code.
         We'll compare the available results.
       </p>
-
     </div>
   );
 }
-
 
 /* ============================================================
    COMPARISON RESULT
@@ -381,133 +315,117 @@ function EmptyState() {
 function ComparisonResult({ result }) {
   const cheapest = result.cheapest;
 
-  const available = result.prices.filter(
-    (item) => item.available
-  );
+  const available = Array.isArray(result.prices)
+    ? result.prices.filter((item) => item.available)
+    : [];
 
-  const unavailable = result.prices.filter(
-    (item) => !item.available
-  );
+  const unavailable = Array.isArray(result.prices)
+    ? result.prices.filter((item) => !item.available)
+    : [];
 
   return (
     <div className="comparison-container">
-
       <div className="result-heading">
-
         <div>
-
           <div className="result-eyebrow">
             PRICE COMPARISON
           </div>
 
           <h2>
-            {result.product.name}
+            {result.product?.name || result.search}
           </h2>
 
-          <p>
-            {result.product.brand}
-            {" · "}
-            {result.product.quantity}
-            {result.product.unit}
-            {" · "}
-            <span className="location-text">
-              PIN {result.location}
-            </span>
-          </p>
-
+          {result.product && (
+            <p>
+              {result.product.brand}
+              {" · "}
+              {result.product.quantity}
+              {result.product.unit}
+              {" · "}
+              <span className="location-text">
+                PIN {result.location}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="checked-badge">
           <span>●</span>
-          Live check
+          Latest check
         </div>
-
       </div>
-
 
       {/* WINNER */}
 
-      <div className="winner-card">
+      {cheapest && (
+        <div className="winner-card">
+          <div className="winner-left">
+            <div className="trophy">🏆</div>
 
-        <div className="winner-left">
+            <div>
+              <div className="winner-label">
+                CHEAPEST AVAILABLE
+              </div>
 
-          <div className="trophy">
-            🏆
+              <div className="winner-platform">
+                {cheapest.platform}
+              </div>
+
+              <div className="winner-subtitle">
+                Available at your location
+              </div>
+            </div>
           </div>
 
-          <div>
-
-            <div className="winner-label">
-              CHEAPEST AVAILABLE
+          <div className="winner-right">
+            <div className="winner-price">
+              ₹{cheapest.price}
             </div>
 
-            <div className="winner-platform">
-              {cheapest.platform}
-            </div>
-
-            <div className="winner-subtitle">
-              Available at your location
-            </div>
-
+            {result.maximum_saving > 0 && (
+              <div className="saving-pill">
+                Save ₹{result.maximum_saving}
+              </div>
+            )}
           </div>
-
         </div>
-
-
-        <div className="winner-right">
-
-          <div className="winner-price">
-            ₹{cheapest.price}
-          </div>
-
-          {result.maximum_saving > 0 && (
-            <div className="saving-pill">
-              Save ₹{result.maximum_saving}
-            </div>
-          )}
-
-        </div>
-
-      </div>
-
+      )}
 
       {/* AVAILABLE */}
 
-      <div className="section-heading">
+      {available.length > 0 && (
+        <>
+          <div className="section-heading">
+            <div>
+              <span className="section-dot available-dot"></span>
+              Available now
+            </div>
 
-        <div>
-          <span className="section-dot available-dot"></span>
-          Available now
-        </div>
+            <span>
+              {available.length} platforms
+            </span>
+          </div>
 
-        <span>
-          {available.length} platforms
-        </span>
-
-      </div>
-
-
-      <div className="platform-grid">
-
-        {available.map((item) => (
-          <PlatformCard
-            key={item.platform}
-            item={item}
-            winner={
-              item.platform === cheapest.platform
-            }
-          />
-        ))}
-
-      </div>
-
+          <div className="platform-grid">
+            {available.map((item) => (
+              <PlatformCard
+                key={item.platform}
+                item={item}
+                winner={
+                  cheapest &&
+                  item.platform === cheapest.platform
+                }
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* UNAVAILABLE */}
 
       {unavailable.length > 0 && (
         <>
           <div className="section-heading unavailable-heading">
-
             <div>
               <span className="section-dot unavailable-dot"></span>
               Currently unavailable
@@ -516,11 +434,9 @@ function ComparisonResult({ result }) {
             <span>
               {unavailable.length} platforms
             </span>
-
           </div>
 
           <div className="platform-grid">
-
             {unavailable.map((item) => (
               <PlatformCard
                 key={item.platform}
@@ -528,32 +444,24 @@ function ComparisonResult({ result }) {
                 winner={false}
               />
             ))}
-
           </div>
         </>
       )}
 
-
       <div className="result-footnote">
-
         <span>◷</span>
-
         Prices and availability can change.
         Results shown are based on the latest available check.
-
       </div>
-
     </div>
   );
 }
-
 
 /* ============================================================
    PLATFORM CARD
    ============================================================ */
 
 function PlatformCard({ item, winner }) {
-
   const meta =
     PLATFORM_META[item.platform] || {
       icon: "•",
@@ -570,9 +478,7 @@ function PlatformCard({ item, winner }) {
             : "platform-card unavailable-card"
       }
     >
-
       <div className="platform-top">
-
         <div
           className={`platform-logo ${meta.className}`}
         >
@@ -580,10 +486,7 @@ function PlatformCard({ item, winner }) {
         </div>
 
         <div className="platform-info">
-
-          <strong>
-            {item.platform}
-          </strong>
+          <strong>{item.platform}</strong>
 
           <span
             className={
@@ -598,7 +501,6 @@ function PlatformCard({ item, winner }) {
               ? "Available"
               : "Out of stock"}
           </span>
-
         </div>
 
         {winner && (
@@ -606,59 +508,52 @@ function PlatformCard({ item, winner }) {
             BEST
           </div>
         )}
-
       </div>
 
-
       <div className="platform-bottom">
-
         <div className="platform-price">
-          ₹{item.price}
+          {item.price !== null &&
+          item.price !== undefined
+            ? `₹${item.price}`
+            : "—"}
         </div>
 
         <div className="platform-location">
-          📍 {item.location}
+          📍 {item.location || "Location unavailable"}
         </div>
-
       </div>
-
     </div>
   );
 }
-
 
 /* ============================================================
    UNAVAILABLE RESULT
    ============================================================ */
 
 function UnavailableResult({ result }) {
+  const prices = Array.isArray(result.prices)
+    ? result.prices
+    : [];
 
   return (
     <div className="comparison-container">
-
       <div className="result-heading">
-
         <div>
-
           <div className="result-eyebrow">
             PRICE COMPARISON
           </div>
 
           <h2>
-            {result.product?.name}
+            {result.product?.name || result.search}
           </h2>
 
           <p>
             PIN {result.location}
           </p>
-
         </div>
-
       </div>
 
-
       <div className="all-unavailable">
-
         <div className="all-unavailable-icon">
           ×
         </div>
@@ -669,27 +564,24 @@ function UnavailableResult({ result }) {
 
         <p>
           This product was found, but it is currently
-          unavailable on the checked platforms for this location.
+          unavailable on the checked platforms for this
+          location.
         </p>
-
       </div>
 
-
-      <div className="platform-grid">
-
-        {result.prices.map((item) => (
-          <PlatformCard
-            key={item.platform}
-            item={item}
-            winner={false}
-          />
-        ))}
-
-      </div>
-
+      {prices.length > 0 && (
+        <div className="platform-grid">
+          {prices.map((item) => (
+            <PlatformCard
+              key={item.platform}
+              item={item}
+              winner={false}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
 
 export default App;
