@@ -33,10 +33,17 @@ class BigBasketProvider(BaseProvider):
     def _is_available(text: str) -> bool:
         lower = text.lower()
 
-        if "currently unavailable" in lower:
-            return False
+        unavailable_phrases = [
+            "currently unavailable",
+            "out of stock",
+            "notify me",
+            "sold out",
+        ]
 
-        if "notify me" in lower:
+        if any(
+            phrase in lower
+            for phrase in unavailable_phrases
+        ):
             return False
 
         return bool(
@@ -52,14 +59,31 @@ class BigBasketProvider(BaseProvider):
         search: str,
     ) -> bool:
 
-        text_lower = text.lower()
-        search_lower = search.lower()
+        text_lower = re.sub(
+            r"\s+",
+            " ",
+            text.lower(),
+        ).strip()
+
+        search_lower = re.sub(
+            r"\s+",
+            " ",
+            search.lower(),
+        ).strip()
+
+        # -------------------------------------------------
+        # Basic product identity
+        # -------------------------------------------------
 
         if "amul" not in text_lower:
             return False
 
         if "taaza" not in text_lower:
             return False
+
+        # -------------------------------------------------
+        # Quantity matching
+        # -------------------------------------------------
 
         wants_1l = bool(
             re.search(
@@ -69,15 +93,52 @@ class BigBasketProvider(BaseProvider):
         )
 
         if wants_1l:
-            if not re.search(
-                r"\b1\s*l\b",
-                text_lower,
-            ):
+
+            has_1l = bool(
+                re.search(
+                    r"\b1\s*l\b|\b1l\b|\b1000\s*ml\b",
+                    text_lower,
+                )
+            )
+
+            if not has_1l:
                 return False
 
-        if "taaza milk" in search_lower:
-            if "taaza milk" not in text_lower:
-                return False
+        # -------------------------------------------------
+        # Product type
+        #
+        # Accept:
+        # Amul Taaza Milk
+        # Amul Taaza Toned Milk
+        # Amul Taaza Toned Milk Pouch
+        #
+        # Do not require the exact phrase
+        # "taaza milk".
+        # -------------------------------------------------
+
+        if "milk" not in text_lower:
+            return False
+
+        # -------------------------------------------------
+        # Avoid obvious unrelated products
+        # -------------------------------------------------
+
+        unrelated_terms = [
+            "curd",
+            "dahi",
+            "buttermilk",
+            "lassi",
+            "ghee",
+            "butter",
+            "paneer",
+            "cheese",
+        ]
+
+        if any(
+            term in text_lower
+            for term in unrelated_terms
+        ):
+            return False
 
         return True
 
@@ -92,7 +153,7 @@ class BigBasketProvider(BaseProvider):
 
         best_text = ""
 
-        for _ in range(8):
+        for _ in range(10):
 
             current = current.locator("..")
 
@@ -138,11 +199,7 @@ class BigBasketProvider(BaseProvider):
 
         with sync_playwright() as p:
 
-            # IMPORTANT:
-            # Render runs on a headless Linux server
-            # without a graphical X server.
-            #
-            # Therefore this MUST be headless=True.
+            # Render runs without a graphical desktop.
             browser = p.chromium.launch(
                 headless=True
             )
@@ -155,6 +212,7 @@ class BigBasketProvider(BaseProvider):
             )
 
             try:
+
                 page.goto(
                     search_url,
                     wait_until="domcontentloaded",
@@ -172,6 +230,7 @@ class BigBasketProvider(BaseProvider):
                 for i in range(links.count()):
 
                     try:
+
                         link = links.nth(i)
 
                         href = link.get_attribute(
@@ -189,7 +248,9 @@ class BigBasketProvider(BaseProvider):
                         if not product_match:
                             continue
 
-                        product_id = product_match.group(1)
+                        product_id = (
+                            product_match.group(1)
+                        )
 
                         if any(
                             item["product_id"]
@@ -198,7 +259,9 @@ class BigBasketProvider(BaseProvider):
                         ):
                             continue
 
-                        text = self._card_text(link)
+                        text = self._card_text(
+                            link
+                        )
 
                         if not text:
                             continue
@@ -236,20 +299,28 @@ class BigBasketProvider(BaseProvider):
                 if not candidates:
                     return None
 
-                # Prefer the exact Taaza Milk pouch
-                # when available.
-                candidates.sort(
-                    key=lambda item: (
-                        "taaza milk"
-                        not in item["text"].lower(),
-                        "pouch"
-                        not in item["text"].lower(),
+                # Prefer the most relevant result.
+                def ranking(item):
+
+                    text = item[
+                        "text"
+                    ].lower()
+
+                    return (
+                        "taaza" not in text,
+                        "milk" not in text,
+                        "pouch" not in text,
+                        item["price"],
                     )
+
+                candidates.sort(
+                    key=ranking
                 )
 
                 return candidates[0]
 
             finally:
+
                 browser.close()
 
     def search(
@@ -261,6 +332,7 @@ class BigBasketProvider(BaseProvider):
         checked_at = self.now_utc()
 
         try:
+
             result = self._search_browser(
                 search,
                 location,
@@ -303,8 +375,11 @@ class BigBasketProvider(BaseProvider):
         href = result["href"]
 
         if href.startswith("http"):
+
             product_url = href
+
         else:
+
             product_url = (
                 "https://www.bigbasket.com"
                 + href
