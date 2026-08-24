@@ -37,6 +37,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "https://grocery-price-bot-frontend.onrender.com",
         "https://grocery-price-bot-vivek-frontend.onrender.com",
+        "https://grocery-price-bot-frontend-vivek.onrender.com",
     ],
 
     allow_credentials=True,
@@ -80,4 +81,5 @@ def compare(
         search,
         location,
     )
+
 
