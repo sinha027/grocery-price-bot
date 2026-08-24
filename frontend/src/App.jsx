@@ -83,6 +83,51 @@ function App() {
 
       const data = await response.json();
 
+      /*
+       * Normalize provider availability.
+       *
+       * The backend provides both:
+       *   available: true/false
+       *   status: LIVE/NOT_FOUND/ERROR/etc.
+       *
+       * A provider is considered available when either:
+       *   1. available is explicitly true, OR
+       *   2. status is LIVE.
+       *
+       * This keeps the frontend consistent with the live provider data.
+       */
+      if (Array.isArray(data.prices)) {
+        data.prices = data.prices.map((item) => ({
+          ...item,
+          available:
+            item.available === true ||
+            String(item.status || "").toUpperCase() === "LIVE",
+        }));
+      }
+
+      /*
+       * Keep providers synchronized too, if the backend includes them.
+       */
+      if (Array.isArray(data.providers)) {
+        data.providers = data.providers.map((item) => ({
+          ...item,
+          available:
+            item.available === true ||
+            String(item.status || "").toUpperCase() === "LIVE",
+        }));
+      }
+
+      /*
+       * Recalculate whether anything is available from the normalized
+       * provider results. This prevents the UI from showing an
+       * unavailable state when a LIVE provider exists.
+       */
+      if (Array.isArray(data.prices)) {
+        data.available_anywhere = data.prices.some(
+          (item) => item.available === true
+        );
+      }
+
       setResult(data);
     } catch (error) {
       console.error("Comparison error:", error);
@@ -344,11 +389,11 @@ function ComparisonResult({ result }) {
   const cheapest = result.cheapest;
 
   const available = Array.isArray(result.prices)
-    ? result.prices.filter((item) => item.available)
+    ? result.prices.filter((item) => item.available === true)
     : [];
 
   const unavailable = Array.isArray(result.prices)
-    ? result.prices.filter((item) => !item.available)
+    ? result.prices.filter((item) => item.available !== true)
     : [];
 
   return (
@@ -398,40 +443,43 @@ function ComparisonResult({ result }) {
 
       {/* WINNER */}
 
-      {cheapest && (
-        <div className="winner-card">
-          <div className="winner-left">
-            <div className="trophy">🏆</div>
+      {cheapest &&
+        cheapest.available !== false &&
+        cheapest.price !== null &&
+        cheapest.price !== undefined && (
+          <div className="winner-card">
+            <div className="winner-left">
+              <div className="trophy">🏆</div>
 
-            <div>
-              <div className="winner-label">
-                CHEAPEST AVAILABLE
-              </div>
+              <div>
+                <div className="winner-label">
+                  CHEAPEST AVAILABLE
+                </div>
 
-              <div className="winner-platform">
-                {cheapest.platform}
-              </div>
+                <div className="winner-platform">
+                  {cheapest.platform}
+                </div>
 
-              <div className="winner-subtitle">
-                Available at your location
+                <div className="winner-subtitle">
+                  Available at your location
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="winner-right">
-            <div className="winner-price">
-              ₹{Number(cheapest.price).toFixed(2)}
-            </div>
-
-            {result.maximum_saving > 0 && (
-              <div className="saving-pill">
-                Save ₹
-                {Number(result.maximum_saving).toFixed(2)}
+            <div className="winner-right">
+              <div className="winner-price">
+                ₹{Number(cheapest.price).toFixed(2)}
               </div>
-            )}
+
+              {result.maximum_saving > 0 && (
+                <div className="saving-pill">
+                  Save ₹
+                  {Number(result.maximum_saving).toFixed(2)}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* AVAILABLE */}
 
@@ -510,12 +558,16 @@ function PlatformCard({ item, winner }) {
       className: "default",
     };
 
+  const isAvailable =
+    item.available === true ||
+    String(item.status || "").toUpperCase() === "LIVE";
+
   return (
     <div
       className={
         winner
           ? "platform-card winner-platform-card"
-          : item.available
+          : isAvailable
             ? "platform-card"
             : "platform-card unavailable-card"
       }
@@ -532,14 +584,14 @@ function PlatformCard({ item, winner }) {
 
           <span
             className={
-              item.available
+              isAvailable
                 ? "status available-status"
                 : "status unavailable-status"
             }
           >
             <span className="status-dot"></span>
 
-            {item.available
+            {isAvailable
               ? "Available"
               : "Out of stock"}
           </span>
@@ -638,4 +690,3 @@ function UnavailableResult({ result }) {
 }
 
 export default App;
-
