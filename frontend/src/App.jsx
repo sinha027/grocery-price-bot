@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./App.css";
 
+const API_URL = "http://127.0.0.1:8000";
+
 const PLATFORM_META = {
   Blinkit: { icon: "⚡", className: "blinkit" },
   Zepto: { icon: "Z", className: "zepto" },
@@ -40,25 +42,28 @@ function App() {
 
     try {
       const url =
-        `https://grocery-price-bot-umiu.onrender.com/compare` +
+        `${API_URL}/compare` +
         `?search=${encodeURIComponent(search)}` +
         `&location=${encodeURIComponent(location)}`;
 
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error("Backend request failed");
+        throw new Error(
+          `Backend request failed with status ${response.status}`
+        );
       }
 
       const data = await response.json();
+
       setResult(data);
     } catch (error) {
-      console.error(error);
+      console.error("Comparison error:", error);
 
       setResult({
         success: false,
         message:
-          "We couldn't connect to the comparison service. Please try again.",
+          "We couldn't connect to the comparison service. Make sure the backend is running.",
       });
     } finally {
       setLoading(false);
@@ -97,21 +102,15 @@ function App() {
               No account required
             </span>
 
-            <a
-              href="https://www.linkedin.com/in/sinha027/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="vivek-watermark"
-              aria-label="Built by Vivek Sinha on LinkedIn"
-            >
+            <span className="vivek-watermark">
               <span className="creator-name">
                 Built by Vivek Sinha
               </span>
 
               <span className="creator-link">
-                · LinkedIn ↗
+                · Live comparison
               </span>
-            </a>
+            </span>
           </div>
         </div>
       </nav>
@@ -179,12 +178,10 @@ function App() {
                     type="text"
                     value={location}
                     onChange={(event) =>
-                      setLocation(
-                        event.target.value.replace(/\D/g, "")
-                      )
+                      setLocation(event.target.value)
                     }
                     onKeyDown={handleKeyDown}
-                    placeholder="PIN code"
+                    placeholder="Enter PIN code"
                     maxLength={6}
                   />
                 </div>
@@ -335,18 +332,32 @@ function ComparisonResult({ result }) {
             {result.product?.name || result.search}
           </h2>
 
-          {result.product && (
-            <p>
-              {result.product.brand}
-              {" · "}
-              {result.product.quantity}
-              {result.product.unit}
-              {" · "}
-              <span className="location-text">
-                PIN {result.location}
-              </span>
-            </p>
-          )}
+          <p>
+            {result.product?.brand && (
+              <>
+                {result.product.brand}
+                {" · "}
+              </>
+            )}
+
+            {result.product?.quantity && (
+              <>
+                {result.product.quantity}
+                {" "}
+              </>
+            )}
+
+            {result.product?.unit && (
+              <>
+                {result.product.unit}
+                {" · "}
+              </>
+            )}
+
+            <span className="location-text">
+              PIN {result.location}
+            </span>
+          </p>
         </div>
 
         <div className="checked-badge">
@@ -379,12 +390,15 @@ function ComparisonResult({ result }) {
 
           <div className="winner-right">
             <div className="winner-price">
-              ₹{cheapest.price}
+              ₹{Number(cheapest.price).toFixed(2)}
             </div>
 
             {result.maximum_saving > 0 && (
               <div className="saving-pill">
-                Save ₹{result.maximum_saving}
+                Save ₹
+                {Number(
+                  result.maximum_saving
+                ).toFixed(2)}
               </div>
             )}
           </div>
@@ -514,13 +528,24 @@ function PlatformCard({ item, winner }) {
         <div className="platform-price">
           {item.price !== null &&
           item.price !== undefined
-            ? `₹${item.price}`
+            ? `₹${Number(item.price).toFixed(2)}`
             : "—"}
         </div>
 
         <div className="platform-location">
           📍 {item.location || "Location unavailable"}
         </div>
+
+        {item.product_url && (
+          <a
+            href={item.product_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="view-product"
+          >
+            View product →
+          </a>
+        )}
       </div>
     </div>
   );

@@ -1,287 +1,301 @@
 from datetime import datetime
+from typing import Optional
+
+from backend.providers import PROVIDERS
 
 
 # ============================================================
-# DEMO PRODUCT DATABASE
-# ============================================================
-#
-# IMPORTANT:
-# These are currently DEMO prices.
-# Later we will replace these with legitimate live data sources.
-#
+# TEXT NORMALIZATION
 # ============================================================
 
-PRODUCTS = [
+def normalize_text(text: str) -> str:
+    """
+    Normalize text for basic product matching.
+    """
 
-    {
-        "name": "Amul Taaza Milk 1L",
-        "brand": "Amul",
-        "quantity": 1,
-        "unit": "L",
+    if not text:
+        return ""
 
-        "prices": {
-            "Blinkit": 68,
-            "Zepto": 66,
-            "Instamart": 69,
-            "BigBasket": 67,
-        },
-
-        "availability": {
-            "Blinkit": True,
-            "Zepto": False,
-            "Instamart": True,
-            "BigBasket": True,
-        },
-    },
-
-
-    {
-        "name": "Amul Butter 500g",
-        "brand": "Amul",
-        "quantity": 500,
-        "unit": "g",
-
-        "prices": {
-            "Blinkit": 245,
-            "Zepto": 239,
-            "Instamart": 242,
-            "BigBasket": 241,
-        },
-
-        "availability": {
-            "Blinkit": True,
-            "Zepto": True,
-            "Instamart": False,
-            "BigBasket": True,
-        },
-    },
-
-
-    {
-        "name": "Tata Salt 1kg",
-        "brand": "Tata",
-        "quantity": 1,
-        "unit": "kg",
-
-        "prices": {
-            "Blinkit": 28,
-            "Zepto": 27,
-            "Instamart": 29,
-            "BigBasket": 28,
-        },
-
-        "availability": {
-            "Blinkit": True,
-            "Zepto": True,
-            "Instamart": True,
-            "BigBasket": False,
-        },
-    },
-
-]
-
-
-# ============================================================
-# NORMALIZE TEXT
-# ============================================================
-
-def normalize_text(text):
-
-    return (
-        text
-        .lower()
-        .replace("-", " ")
-        .replace("_", " ")
-        .replace(",", " ")
+    return " ".join(
+        text.lower()
         .strip()
+        .split()
     )
 
 
 # ============================================================
-# PRODUCT MATCHING
+# PROVIDER SEARCH
 # ============================================================
 
-def product_matches(search, product):
-
-    search = normalize_text(search)
-
-    product_name = normalize_text(
-        product["name"]
-    )
-
-    brand = normalize_text(
-        product["brand"]
-    )
-
-    # --------------------------------------------------------
-    # Exact product-name match
-    # --------------------------------------------------------
-
-    if search == product_name:
-        return True
-
-
-    # --------------------------------------------------------
-    # All search words must exist in the product
-    # --------------------------------------------------------
-
-    search_words = search.split()
-
-    searchable_text = (
-        product_name
-        + " "
-        + brand
-    )
-
-    for word in search_words:
-
-        if word not in searchable_text:
-            return False
-
-    return True
-
-
-# ============================================================
-# SEARCH PRODUCTS
-# ============================================================
-
-def search_products(
+def get_provider_results(
     search: str,
-    location: str = ""
-):
+    location: str,
+) -> list:
+    """
+    Ask every configured provider for a result.
+
+    Providers may return:
+
+        LIVE
+        OUT_OF_STOCK
+        NOT_CONFIGURED
+        ERROR
+        NOT_IMPLEMENTED
+
+    Only LIVE results with a valid price can win
+    the comparison.
+    """
 
     results = []
 
-    for product in PRODUCTS:
+    for provider in PROVIDERS:
 
-        if not product_matches(
-            search,
-            product
-        ):
-            continue
+        try:
 
-
-        # ----------------------------------------------------
-        # Create result for every platform
-        # ----------------------------------------------------
-
-        for platform, price in product["prices"].items():
-
-            available = product[
-                "availability"
-            ].get(
-                platform,
-                False
+            result = provider.search(
+                search,
+                location,
             )
-
-
-            checked_at = (
-                datetime.now().isoformat()
-            )
-
 
             results.append({
+                "platform": result.platform,
 
-                "name": product["name"],
+                "product_name": result.product_name,
 
-                "brand": product["brand"],
+                "price": result.price,
 
-                "quantity": product["quantity"],
+                "available": result.available,
 
-                "unit": product["unit"],
+                "status": result.status,
 
-                "platform": platform,
+                "location": result.location,
 
-                "price": price,
+                "checked_at": result.checked_at,
 
-                "available": available,
+                "product_url": result.product_url,
+
+                "message": result.message,
+
+                "source": "PROVIDER",
+            })
+
+        except Exception as exc:
+
+            results.append({
+                "platform": provider.platform_name,
+
+                "product_name": search,
+
+                "price": None,
+
+                "available": False,
+
+                "status": "ERROR",
 
                 "location": location,
 
-                "checked_at": checked_at,
+                "checked_at": datetime.now().isoformat(),
 
+                "product_url": None,
+
+                "message": str(exc),
+
+                "source": "PROVIDER",
             })
-
 
     return results
 
 
 # ============================================================
-# FIND CHEAPEST AVAILABLE PRODUCT
+# LIVE RESULTS ONLY
 # ============================================================
 
-def find_cheapest_available(
-    results
-):
+def get_live_results(
+    results: list,
+) -> list:
+    """
+    Return only genuine LIVE results that contain a price.
+    """
 
-    available_products = [
-
+    return [
         item
-
         for item in results
-
-        if item["available"] is True
-
+        if (
+            item.get("status") == "LIVE"
+            and item.get("price") is not None
+            and item.get("available") is True
+        )
     ]
 
 
-    if not available_products:
+# ============================================================
+# FIND CHEAPEST LIVE RESULT
+# ============================================================
 
+def find_cheapest_available(
+    results: list,
+) -> Optional[dict]:
+    """
+    Find the cheapest available LIVE product.
+    """
+
+    live_results = get_live_results(
+        results
+    )
+
+    if not live_results:
         return None
 
-
     return min(
-        available_products,
-        key=lambda item: item["price"]
+        live_results,
+        key=lambda item: item["price"],
     )
 
 
 # ============================================================
-# GET AVAILABLE PRODUCTS
+# FORMAT RESULTS
 # ============================================================
 
-def get_available_products(
-    results
-):
+def format_platform_results(
+    results: list,
+) -> list:
+    """
+    Format provider results for the frontend.
+    """
 
-    return [
+    formatted = []
 
-        item
+    for item in results:
 
-        for item in results
+        formatted.append({
+            "platform": item.get(
+                "platform"
+            ),
 
-        if item["available"] is True
+            "price": item.get(
+                "price"
+            ),
 
-    ]
+            "available": item.get(
+                "available",
+                False,
+            ),
+
+            "status": item.get(
+                "status"
+            ),
+
+            "location": item.get(
+                "location"
+            ),
+
+            "checked_at": item.get(
+                "checked_at"
+            ),
+
+            "source": item.get(
+                "source"
+            ),
+
+            "product_url": item.get(
+                "product_url"
+            ),
+
+            "message": item.get(
+                "message"
+            ),
+
+            "product_name": item.get(
+                "product_name"
+            ),
+        })
+
+    return formatted
 
 
 # ============================================================
-# MAIN COMPARISON FUNCTION
+# PRODUCT INFORMATION
+# ============================================================
+
+def build_product_info(
+    search: str,
+    results: list,
+) -> Optional[dict]:
+    """
+    Build basic product information from the first
+    provider result that has a product name.
+    """
+
+    for item in results:
+
+        product_name = item.get(
+            "product_name"
+        )
+
+        if product_name:
+
+            return {
+                "name": product_name,
+
+                "brand": None,
+
+                "quantity": None,
+
+                "unit": None,
+            }
+
+    if search:
+
+        return {
+            "name": search,
+
+            "brand": None,
+
+            "quantity": None,
+
+            "unit": None,
+        }
+
+    return None
+
+
+# ============================================================
+# MAIN LIVE COMPARISON
 # ============================================================
 
 def compare_product(
     search: str,
-    location: str
-):
+    location: str = "",
+) -> dict:
+    """
+    Compare LIVE prices only.
+
+    IMPORTANT:
+
+    This function does NOT use demo prices.
+
+    A platform can only win the comparison when:
+
+        status == LIVE
+        price is not None
+        available == True
+
+    If no provider has a genuine live price,
+    the API clearly reports that live pricing
+    is currently unavailable.
+    """
+
+    search = search.strip()
+
+    location = location.strip()
 
     # --------------------------------------------------------
-    # Search
+    # Validation
     # --------------------------------------------------------
 
-    results = search_products(
-        search,
-        location
-    )
-
-
-    # --------------------------------------------------------
-    # Product not found
-    # --------------------------------------------------------
-
-    if not results:
+    if not search:
 
         return {
-
             "success": False,
 
             "product_found": False,
@@ -293,33 +307,82 @@ def compare_product(
             "location": location,
 
             "message": (
-                "No matching product was found."
+                "Enter a product name."
             ),
 
             "prices": [],
 
+            "providers": [],
+
+            "cheapest": None,
+
+            "maximum_saving": 0,
         }
 
-
     # --------------------------------------------------------
-    # Find available products
+    # Get provider results
     # --------------------------------------------------------
 
-    available_products = (
-        get_available_products(
-            results
-        )
+    provider_results = get_provider_results(
+        search,
+        location,
     )
 
+    # --------------------------------------------------------
+    # Find LIVE results
+    # --------------------------------------------------------
+
+    live_results = get_live_results(
+        provider_results
+    )
 
     # --------------------------------------------------------
-    # Product exists but unavailable everywhere
+    # No provider results
     # --------------------------------------------------------
 
-    if not available_products:
+    if not provider_results:
 
         return {
+            "success": False,
 
+            "product_found": False,
+
+            "available_anywhere": False,
+
+            "search": search,
+
+            "location": location,
+
+            "message": (
+                "No live price providers are configured."
+            ),
+
+            "prices": [],
+
+            "providers": [],
+
+            "cheapest": None,
+
+            "maximum_saving": 0,
+
+            "data_note": (
+                "This comparison uses live provider "
+                "data only. Demo prices are disabled."
+            ),
+        }
+
+    # --------------------------------------------------------
+    # No LIVE results
+    # --------------------------------------------------------
+
+    if not live_results:
+
+        product = build_product_info(
+            search,
+            provider_results,
+        )
+
+        return {
             "success": True,
 
             "product_found": True,
@@ -330,111 +393,98 @@ def compare_product(
 
             "location": location,
 
-            "product": {
+            "product": product,
 
-                "name": results[0]["name"],
-
-                "brand": results[0]["brand"],
-
-                "quantity": results[0]["quantity"],
-
-                "unit": results[0]["unit"],
-
-            },
-
-            "message": (
-                "Product was found, "
-                "but it is currently "
-                "unavailable on all platforms."
+            "prices": format_platform_results(
+                provider_results
             ),
 
-            "prices": [
+            "providers": format_platform_results(
+                provider_results
+            ),
 
-                {
+            "cheapest": None,
 
-                    "platform": item["platform"],
+            "maximum_saving": 0,
 
-                    "price": item["price"],
-
-                    "available": False,
-
-                    "location": item["location"],
-
-                    "checked_at": item["checked_at"],
-
-                }
-
-                for item in results
-
-            ],
-
+            "data_note": (
+                "No live price is currently available. "
+                "Demo prices are disabled."
+            ),
         }
 
-
     # --------------------------------------------------------
-    # Find cheapest AVAILABLE platform
+    # Find cheapest LIVE price
     # --------------------------------------------------------
 
     cheapest = find_cheapest_available(
-        results
+        provider_results
     )
 
+    if cheapest is None:
+
+        return {
+            "success": True,
+
+            "product_found": True,
+
+            "available_anywhere": False,
+
+            "search": search,
+
+            "location": location,
+
+            "product": build_product_info(
+                search,
+                provider_results,
+            ),
+
+            "prices": format_platform_results(
+                provider_results
+            ),
+
+            "providers": format_platform_results(
+                provider_results
+            ),
+
+            "cheapest": None,
+
+            "maximum_saving": 0,
+
+            "data_note": (
+                "No live price is currently available. "
+                "Demo prices are disabled."
+            ),
+        }
 
     # --------------------------------------------------------
-    # Highest available price
+    # Calculate maximum saving
     # --------------------------------------------------------
 
-    highest_available_price = max(
-
+    highest_price = max(
         item["price"]
-
-        for item in available_products
-
+        for item in live_results
     )
 
-
-    # --------------------------------------------------------
-    # Saving
-    # --------------------------------------------------------
-
-    saving = (
-
-        highest_available_price
+    maximum_saving = (
+        highest_price
         - cheapest["price"]
-
     )
 
-
     # --------------------------------------------------------
-    # Platform results
+    # Product information
     # --------------------------------------------------------
 
-    prices = []
-
-
-    for item in results:
-
-        prices.append({
-
-            "platform": item["platform"],
-
-            "price": item["price"],
-
-            "available": item["available"],
-
-            "location": item["location"],
-
-            "checked_at": item["checked_at"],
-
-        })
-
+    product = build_product_info(
+        search,
+        provider_results,
+    )
 
     # --------------------------------------------------------
     # Final response
     # --------------------------------------------------------
 
     return {
-
         "success": True,
 
         "product_found": True,
@@ -445,34 +495,40 @@ def compare_product(
 
         "location": location,
 
-        "product": {
+        "product": product,
 
-            "name": cheapest["name"],
+        "prices": format_platform_results(
+            provider_results
+        ),
 
-            "brand": cheapest["brand"],
-
-            "quantity": cheapest["quantity"],
-
-            "unit": cheapest["unit"],
-
-        },
-
-        "prices": prices,
+        "providers": format_platform_results(
+            provider_results
+        ),
 
         "cheapest": {
-
             "platform": cheapest["platform"],
 
             "price": cheapest["price"],
 
             "available": True,
 
+            "status": cheapest["status"],
+
             "location": cheapest["location"],
 
             "checked_at": cheapest["checked_at"],
 
+            "source": "PROVIDER",
+
+            "product_url": cheapest.get(
+                "product_url"
+            ),
         },
 
-        "maximum_saving": saving,
+        "maximum_saving": maximum_saving,
 
+        "data_note": (
+            "LIVE provider data only. "
+            "Demo prices are disabled."
+        ),
     }
