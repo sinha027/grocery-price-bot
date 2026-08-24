@@ -23,6 +23,7 @@ function App() {
   function handleSearchChange(event) {
     const value = event.target.value;
 
+    // Allow only letters, numbers and spaces.
     const cleaned = value.replace(/[^a-zA-Z0-9 ]/g, "");
 
     setSearch(cleaned);
@@ -31,6 +32,7 @@ function App() {
   function handleLocationChange(event) {
     const value = event.target.value;
 
+    // PIN code: numbers only, maximum 6 digits.
     const cleaned = value.replace(/\D/g, "").slice(0, 6);
 
     setLocation(cleaned);
@@ -82,24 +84,45 @@ function App() {
       const data = await response.json();
 
       /*
-       * Normalize provider availability.
+       * NORMALIZE PROVIDER DATA
        *
-       * A provider is considered available when:
-       *   - available is true
-       *   OR
-       *   - status is LIVE
+       * A provider is available when:
+       *
+       *   available === true
+       *
+       * OR
+       *
+       *   status === "LIVE"
+       *
+       * This is important because BigBasket returns LIVE provider
+       * data and the UI must consistently treat it as available.
        */
       if (Array.isArray(data.prices)) {
-        data.prices = data.prices.map((item) => ({
-          ...item,
-          available:
+        data.prices = data.prices.map((item) => {
+          const isLive =
             item.available === true ||
-            String(item.status || "").toUpperCase() === "LIVE",
-        }));
+            String(item.status || "").toUpperCase() === "LIVE";
+
+          return {
+            ...item,
+            available: isLive,
+
+            /*
+             * Normalize price so the UI always receives a number.
+             * Null/undefined/empty values remain null.
+             */
+            price:
+              item.price !== null &&
+              item.price !== undefined &&
+              item.price !== ""
+                ? Number(item.price)
+                : null,
+          };
+        });
       }
 
       /*
-       * Keep providers synchronized too.
+       * Keep providers synchronized too, if the backend includes them.
        */
       if (Array.isArray(data.providers)) {
         data.providers = data.providers.map((item) => ({
@@ -107,18 +130,46 @@ function App() {
           available:
             item.available === true ||
             String(item.status || "").toUpperCase() === "LIVE",
+
+          price:
+            item.price !== null &&
+            item.price !== undefined &&
+            item.price !== ""
+              ? Number(item.price)
+              : null,
         }));
       }
 
       /*
-       * Recalculate availability using the normalized provider results.
+       * Recalculate available_anywhere from the normalized prices.
        */
       if (Array.isArray(data.prices)) {
         data.available_anywhere = data.prices.some(
-          (item) =>
-            item.available === true ||
-            String(item.status || "").toUpperCase() === "LIVE"
+          (item) => item.available === true
         );
+      }
+
+      /*
+       * Also normalize cheapest when present.
+       *
+       * This prevents the winner card from disagreeing with
+       * the provider cards.
+       */
+      if (data.cheapest) {
+        data.cheapest = {
+          ...data.cheapest,
+
+          available:
+            data.cheapest.available === true ||
+            String(data.cheapest.status || "").toUpperCase() === "LIVE",
+
+          price:
+            data.cheapest.price !== null &&
+            data.cheapest.price !== undefined &&
+            data.cheapest.price !== ""
+              ? Number(data.cheapest.price)
+              : null,
+        };
       }
 
       setResult(data);
@@ -308,19 +359,19 @@ function App() {
             result.success &&
             Array.isArray(result.prices) &&
             result.prices.some(
-              (item) =>
-                item.available === true ||
-                String(item.status || "").toUpperCase() === "LIVE"
-            ) && <ComparisonResult result={result} />}
+              (item) => item.available === true
+            ) && (
+              <ComparisonResult result={result} />
+            )}
 
           {result &&
             result.success &&
             Array.isArray(result.prices) &&
             !result.prices.some(
-              (item) =>
-                item.available === true ||
-                String(item.status || "").toUpperCase() === "LIVE"
-            ) && <UnavailableResult result={result} />}
+              (item) => item.available === true
+            ) && (
+              <UnavailableResult result={result} />
+            )}
 
           {!result && !loading && <EmptyState />}
         </section>
@@ -366,7 +417,9 @@ function LoadingState() {
 function EmptyState() {
   return (
     <div className="empty-state">
-      <div className="empty-icon">✦</div>
+      <div className="empty-icon">
+        ✦
+      </div>
 
       <h3>
         Your best deal is one search away
@@ -388,25 +441,29 @@ function ComparisonResult({ result }) {
   const cheapest = result.cheapest;
 
   /*
-   * IMPORTANT:
-   * Use the same availability rule everywhere.
+   * SINGLE AVAILABILITY RULE
    *
-   * BigBasket currently returns:
-   *   available: true
-   *   status: LIVE
-   *
-   * Therefore it belongs in "Available now".
+   * This is intentionally the same rule used during
+   * API normalization and inside PlatformCard.
    */
   const isItemAvailable = (item) =>
     item.available === true ||
     String(item.status || "").toUpperCase() === "LIVE";
 
+  /*
+   * AVAILABLE PLATFORMS
+   */
   const available = Array.isArray(result.prices)
     ? result.prices.filter(isItemAvailable)
     : [];
 
+  /*
+   * UNAVAILABLE PLATFORMS
+   */
   const unavailable = Array.isArray(result.prices)
-    ? result.prices.filter((item) => !isItemAvailable(item))
+    ? result.prices.filter(
+        (item) => !isItemAvailable(item)
+      )
     : [];
 
   return (
@@ -457,7 +514,6 @@ function ComparisonResult({ result }) {
       {/* WINNER */}
 
       {cheapest &&
-        cheapest.available !== false &&
         (
           cheapest.available === true ||
           String(cheapest.status || "").toUpperCase() === "LIVE"
@@ -466,7 +522,9 @@ function ComparisonResult({ result }) {
         cheapest.price !== undefined && (
           <div className="winner-card">
             <div className="winner-left">
-              <div className="trophy">🏆</div>
+              <div className="trophy">
+                🏆
+              </div>
 
               <div>
                 <div className="winner-label">
@@ -491,7 +549,9 @@ function ComparisonResult({ result }) {
               {result.maximum_saving > 0 && (
                 <div className="saving-pill">
                   Save ₹
-                  {Number(result.maximum_saving).toFixed(2)}
+                  {Number(
+                    result.maximum_saving
+                  ).toFixed(2)}
                 </div>
               )}
             </div>
@@ -575,6 +635,12 @@ function PlatformCard({ item, winner }) {
       className: "default",
     };
 
+  /*
+   * IMPORTANT:
+   * Never force availability to true.
+   *
+   * Use the actual normalized provider data.
+   */
   const isAvailable =
     item.available === true ||
     String(item.status || "").toUpperCase() === "LIVE";
@@ -597,7 +663,9 @@ function PlatformCard({ item, winner }) {
         </div>
 
         <div className="platform-info">
-          <strong>{item.platform}</strong>
+          <strong>
+            {item.platform}
+          </strong>
 
           <span
             className={
@@ -624,7 +692,8 @@ function PlatformCard({ item, winner }) {
       <div className="platform-bottom">
         <div className="platform-price">
           {item.price !== null &&
-          item.price !== undefined
+          item.price !== undefined &&
+          !Number.isNaN(Number(item.price))
             ? `₹${Number(item.price).toFixed(2)}`
             : "—"}
         </div>
