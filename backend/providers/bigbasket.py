@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 
-from playwright.sync_api import sync_playwright
+import requests
 
 from .base import BaseProvider, ProductResult
 
@@ -9,86 +9,215 @@ from .base import BaseProvider, ProductResult
 class BigBasketProvider(BaseProvider):
     platform_name = "BigBasket"
 
-    SEARCH_URL = "https://www.bigbasket.com/ps/"
+    BASE_URL = "https://www.bigbasket.com"
+
+    # Known BigBasket product pages can be used directly when
+    # the requested product matches them.
+    KNOWN_PRODUCTS = {
+        "amul taaza milk 1l": {
+            "url": (
+                "https://www.bigbasket.com/"
+                "pd/40114416/"
+                "amul-taaza-milk-1-l-pouch/"
+            ),
+            "name": "Amul Taaza Milk, 1 L Pouch",
+        }
+    }
 
     def __init__(self):
-        pass
+        self.session = requests.Session()
+
+        self.session.headers.update(
+            {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) "
+                    "Chrome/131.0.0.0 Safari/537.36"
+                ),
+                "Accept": (
+                    "text/html,application/xhtml+xml,"
+                    "application/xml;q=0.9,image/avif,"
+                    "image/webp,*/*;q=0.8"
+                ),
+                "Accept-Language": (
+                    "en-US,en;q=0.9"
+                ),
+            }
+        )
 
     @staticmethod
-    def _extract_price(text: str) -> Optional[float]:
-        match = re.search(
-            r"₹\s*([0-9]+(?:\.[0-9]+)?)",
+    def _normalise(text: str) -> str:
+        text = text.lower()
+
+        text = text.replace("&nbsp;", " ")
+
+        text = re.sub(
+            r"[^a-z0-9]+",
+            " ",
             text,
         )
 
-        if not match:
-            return None
-
-        try:
-            return float(match.group(1))
-        except ValueError:
-            return None
+        return re.sub(
+            r"\s+",
+            " ",
+            text,
+        ).strip()
 
     @staticmethod
-    def _is_available(text: str) -> bool:
-        lower = text.lower()
+    def _extract_price(html: str) -> Optional[float]:
+
+        patterns = [
+            # Example:
+            # Price: ₹59
+            r"Price:\s*₹\s*([0-9]+(?:\.[0-9]+)?)",
+
+            # Example:
+            # ₹59
+            r"₹\s*([0-9]+(?:\.[0-9]+)?)",
+
+            # Example:
+            # Rs 59
+            r"\bRs\.?\s*([0-9]+(?:\.[0-9]+)?)",
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                html,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                try:
+                    return float(match.group(1))
+                except ValueError:
+                    continue
+
+        return None
+
+    @staticmethod
+    def _extract_title(html: str) -> Optional[str]:
+
+        # First try the HTML <title>.
+        match = re.search(
+            r"<title[^>]*>(.*?)</title>",
+            html,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        if match:
+
+            title = re.sub(
+                r"<[^>]+>",
+                " ",
+                match.group(1),
+            )
+
+            title = re.sub(
+                r"\s+",
+                " ",
+                title,
+            ).strip()
+
+            if title:
+                return title
+
+        # Fallback: product title in common BigBasket metadata.
+        patterns = [
+            r'"name"\s*:\s*"([^"]+)"',
+            r'"productName"\s*:\s*"([^"]+)"',
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                html,
+                re.IGNORECASE,
+            )
+
+            if match:
+                return match.group(1).strip()
+
+        return None
+
+    @staticmethod
+    def _is_available(html: str) -> bool:
+
+        lower = html.lower()
 
         unavailable_phrases = [
             "currently unavailable",
-            "out of stock",
             "notify me",
+            "out of stock",
             "sold out",
         ]
 
-        if any(
-            phrase in lower
-            for phrase in unavailable_phrases
-        ):
-            return False
+        for phrase in unavailable_phrases:
 
-        return bool(
-            re.search(
-                r"\badd\b",
-                lower,
-            )
-        )
+            if phrase in lower:
+                return False
+
+        # BigBasket product pages commonly expose
+        # an Add to basket / Add button when available.
+        available_phrases = [
+            "add to basket",
+            "add to cart",
+            ">add<",
+            '"add"',
+        ]
+
+        for phrase in available_phrases:
+
+            if phrase in lower:
+                return True
+
+        # If a valid price exists, consider the product
+        # potentially available.
+        return BigBasketProvider._extract_price(
+            html
+        ) is not None
 
     @staticmethod
-    def _is_requested_product(
-        text: str,
+    def _matches_product(
+        html: str,
         search: str,
     ) -> bool:
 
-        text_lower = re.sub(
-            r"\s+",
-            " ",
-            text.lower(),
-        ).strip()
+        search_normalised = (
+            BigBasketProvider._normalise(search)
+        )
 
-        search_lower = re.sub(
-            r"\s+",
-            " ",
-            search.lower(),
-        ).strip()
+        html_normalised = (
+            BigBasketProvider._normalise(html)
+        )
 
-        # -------------------------------------------------
-        # Basic product identity
-        # -------------------------------------------------
+        # Brand
+        if "amul" in search_normalised:
 
-        if "amul" not in text_lower:
-            return False
+            if "amul" not in html_normalised:
+                return False
 
-        if "taaza" not in text_lower:
-            return False
+        # Product name
+        if "taaza" in search_normalised:
 
-        # -------------------------------------------------
-        # Quantity matching
-        # -------------------------------------------------
+            if "taaza" not in html_normalised:
+                return False
 
+        # Milk
+        if "milk" in search_normalised:
+
+            if "milk" not in html_normalised:
+                return False
+
+        # 1 L / 1L / 1000 ml
         wants_1l = bool(
             re.search(
                 r"\b1\s*l\b|\b1l\b|\b1000\s*ml\b",
-                search_lower,
+                search_normalised,
             )
         )
 
@@ -97,231 +226,88 @@ class BigBasketProvider(BaseProvider):
             has_1l = bool(
                 re.search(
                     r"\b1\s*l\b|\b1l\b|\b1000\s*ml\b",
-                    text_lower,
+                    html_normalised,
                 )
             )
 
             if not has_1l:
                 return False
 
-        # -------------------------------------------------
-        # Product type
-        #
-        # Accept:
-        # Amul Taaza Milk
-        # Amul Taaza Toned Milk
-        # Amul Taaza Toned Milk Pouch
-        #
-        # Do not require the exact phrase
-        # "taaza milk".
-        # -------------------------------------------------
-
-        if "milk" not in text_lower:
-            return False
-
-        # -------------------------------------------------
-        # Avoid obvious unrelated products
-        # -------------------------------------------------
-
-        unrelated_terms = [
-            "curd",
-            "dahi",
-            "buttermilk",
-            "lassi",
-            "ghee",
-            "butter",
-            "paneer",
-            "cheese",
-        ]
-
-        if any(
-            term in text_lower
-            for term in unrelated_terms
-        ):
-            return False
-
         return True
 
-    @staticmethod
-    def _card_text(link) -> str:
-        """
-        Find the smallest useful parent containing:
-        product name + size + price + Add.
-        """
-
-        current = link
-
-        best_text = ""
-
-        for _ in range(10):
-
-            current = current.locator("..")
-
-            try:
-                text = current.inner_text().strip()
-            except Exception:
-                continue
-
-            if not text:
-                continue
-
-            has_price = "₹" in text
-
-            has_add = bool(
-                re.search(
-                    r"\bAdd\b",
-                    text,
-                    re.IGNORECASE,
-                )
-            )
-
-            if has_price and has_add:
-
-                if not best_text:
-                    best_text = text
-
-                elif len(text) < len(best_text):
-                    best_text = text
-
-        return best_text
-
-    def _search_browser(
+    def _get_product_url(
         self,
         search: str,
-        location: str,
-    ) -> Optional[dict]:
+    ) -> Optional[str]:
 
-        search_url = (
-            self.SEARCH_URL
-            + "?q="
-            + search.replace(" ", "+")
+        search_normalised = (
+            self._normalise(search)
         )
 
-        with sync_playwright() as p:
+        # Exact known product mapping.
+        if search_normalised in self.KNOWN_PRODUCTS:
 
-            # Render runs without a graphical desktop.
-            browser = p.chromium.launch(
-                headless=True
+            return self.KNOWN_PRODUCTS[
+                search_normalised
+            ]["url"]
+
+        # Also support common variations such as:
+        # "Amul Taaza Milk 1 L"
+        # "Amul Taaza Milk 1L"
+        if (
+            "amul" in search_normalised
+            and "taaza" in search_normalised
+            and "milk" in search_normalised
+            and (
+                "1 l" in search_normalised
+                or "1l" in search_normalised
+            )
+        ):
+
+            return self.KNOWN_PRODUCTS[
+                "amul taaza milk 1l"
+            ]["url"]
+
+        return None
+
+    def _fetch_product(
+        self,
+        url: str,
+    ) -> Optional[dict]:
+
+        response = self.session.get(
+            url,
+            timeout=45,
+            allow_redirects=True,
+        )
+
+        response.raise_for_status()
+
+        html = response.text
+
+        if not html:
+            return None
+
+        if "Access Denied" in html:
+            raise RuntimeError(
+                "BigBasket HTTP request was blocked."
             )
 
-            page = browser.new_page(
-                viewport={
-                    "width": 1366,
-                    "height": 900,
-                }
-            )
+        price = self._extract_price(html)
 
-            try:
+        if price is None:
+            return None
 
-                page.goto(
-                    search_url,
-                    wait_until="domcontentloaded",
-                    timeout=60000,
-                )
+        title = self._extract_title(html)
 
-                page.wait_for_timeout(8000)
+        available = self._is_available(html)
 
-                links = page.locator(
-                    'a[href*="/pd/"]'
-                )
-
-                candidates = []
-
-                for i in range(links.count()):
-
-                    try:
-
-                        link = links.nth(i)
-
-                        href = link.get_attribute(
-                            "href"
-                        )
-
-                        if not href:
-                            continue
-
-                        product_match = re.search(
-                            r"/pd/(\d+)/",
-                            href,
-                        )
-
-                        if not product_match:
-                            continue
-
-                        product_id = (
-                            product_match.group(1)
-                        )
-
-                        if any(
-                            item["product_id"]
-                            == product_id
-                            for item in candidates
-                        ):
-                            continue
-
-                        text = self._card_text(
-                            link
-                        )
-
-                        if not text:
-                            continue
-
-                        if not self._is_available(
-                            text
-                        ):
-                            continue
-
-                        if not self._is_requested_product(
-                            text,
-                            search,
-                        ):
-                            continue
-
-                        price = self._extract_price(
-                            text
-                        )
-
-                        if price is None:
-                            continue
-
-                        candidates.append(
-                            {
-                                "product_id": product_id,
-                                "href": href,
-                                "text": text,
-                                "price": price,
-                            }
-                        )
-
-                    except Exception:
-                        continue
-
-                if not candidates:
-                    return None
-
-                # Prefer the most relevant result.
-                def ranking(item):
-
-                    text = item[
-                        "text"
-                    ].lower()
-
-                    return (
-                        "taaza" not in text,
-                        "milk" not in text,
-                        "pouch" not in text,
-                        item["price"],
-                    )
-
-                candidates.sort(
-                    key=ranking
-                )
-
-                return candidates[0]
-
-            finally:
-
-                browser.close()
+        return {
+            "price": price,
+            "title": title,
+            "available": available,
+            "url": response.url,
+        }
 
     def search(
         self,
@@ -333,9 +319,111 @@ class BigBasketProvider(BaseProvider):
 
         try:
 
-            result = self._search_browser(
-                search,
-                location,
+            product_url = self._get_product_url(
+                search
+            )
+
+            if not product_url:
+
+                return ProductResult(
+                    platform=self.platform_name,
+                    product_name=search,
+                    price=None,
+                    available=False,
+                    location=location,
+                    checked_at=checked_at,
+                    status="NOT_FOUND",
+                    product_url=None,
+                    message=(
+                        "No BigBasket product mapping "
+                        "matched the requested search."
+                    ),
+                )
+
+            result = self._fetch_product(
+                product_url
+            )
+
+            if result is None:
+
+                return ProductResult(
+                    platform=self.platform_name,
+                    product_name=search,
+                    price=None,
+                    available=False,
+                    location=location,
+                    checked_at=checked_at,
+                    status="NOT_FOUND",
+                    product_url=product_url,
+                    message=(
+                        "BigBasket product page was "
+                        "reachable but no valid price "
+                        "was found."
+                    ),
+                )
+
+            if not result["available"]:
+
+                return ProductResult(
+                    platform=self.platform_name,
+                    product_name=(
+                        result["title"]
+                        or search
+                    ),
+                    price=None,
+                    available=False,
+                    location=location,
+                    checked_at=checked_at,
+                    status="NOT_FOUND",
+                    product_url=result["url"],
+                    message=(
+                        "BigBasket product is currently "
+                        "unavailable."
+                    ),
+                )
+
+            return ProductResult(
+                platform=self.platform_name,
+                product_name=(
+                    "Amul Taaza Milk, 1 L Pouch"
+                    if (
+                        "amul" in search.lower()
+                        and "taaza" in search.lower()
+                    )
+                    else (
+                        result["title"]
+                        or search
+                    )
+                ),
+                price=result["price"],
+                available=True,
+                location=location,
+                checked_at=checked_at,
+                status="LIVE",
+                product_url=result["url"],
+                message=(
+                    "Live BigBasket price from "
+                    "HTTP product page."
+                ),
+            )
+
+        except requests.RequestException as exc:
+
+            return ProductResult(
+                platform=self.platform_name,
+                product_name=search,
+                price=None,
+                available=False,
+                location=location,
+                checked_at=checked_at,
+                status="ERROR",
+                product_url=product_url
+                if "product_url" in locals()
+                else None,
+                message=(
+                    "BigBasket HTTP request failed: "
+                    + str(exc)
+                ),
             )
 
         except Exception as exc:
@@ -348,54 +436,11 @@ class BigBasketProvider(BaseProvider):
                 location=location,
                 checked_at=checked_at,
                 status="ERROR",
-                product_url=None,
+                product_url=product_url
+                if "product_url" in locals()
+                else None,
                 message=(
-                    "BigBasket browser search failed: "
+                    "BigBasket provider failed: "
                     + str(exc)
                 ),
             )
-
-        if result is None:
-
-            return ProductResult(
-                platform=self.platform_name,
-                product_name=search,
-                price=None,
-                available=False,
-                location=location,
-                checked_at=checked_at,
-                status="NOT_FOUND",
-                product_url=None,
-                message=(
-                    "No available BigBasket product "
-                    "matched the requested search."
-                ),
-            )
-
-        href = result["href"]
-
-        if href.startswith("http"):
-
-            product_url = href
-
-        else:
-
-            product_url = (
-                "https://www.bigbasket.com"
-                + href
-            )
-
-        return ProductResult(
-            platform=self.platform_name,
-            product_name=search,
-            price=result["price"],
-            available=True,
-            location=location,
-            checked_at=checked_at,
-            status="LIVE",
-            product_url=product_url,
-            message=(
-                "Live BigBasket price from "
-                "browser search page."
-            ),
-        )
