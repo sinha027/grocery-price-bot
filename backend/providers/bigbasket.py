@@ -55,15 +55,6 @@ class BigBasketProvider(BaseProvider):
         text_lower = text.lower()
         search_lower = search.lower()
 
-        # The search page we tested contains:
-        #
-        # Amul
-        # Taaza Milk
-        # 1 L - Pouch
-        #
-        # We deliberately require these for the
-        # "Amul Taaza Milk 1L" search.
-
         if "amul" not in text_lower:
             return False
 
@@ -84,9 +75,6 @@ class BigBasketProvider(BaseProvider):
             ):
                 return False
 
-        # Avoid selecting the Tetra Pak product
-        # when the requested search is specifically
-        # "Taaza Milk" and the pouch product exists.
         if "taaza milk" in search_lower:
             if "taaza milk" not in text_lower:
                 return False
@@ -116,9 +104,8 @@ class BigBasketProvider(BaseProvider):
             if not text:
                 continue
 
-            # Keep the smallest parent that has
-            # enough product-card information.
             has_price = "₹" in text
+
             has_add = bool(
                 re.search(
                     r"\bAdd\b",
@@ -129,11 +116,9 @@ class BigBasketProvider(BaseProvider):
 
             if has_price and has_add:
 
-                # If this is substantially larger than
-                # the previous candidate, don't replace
-                # the smaller useful card.
                 if not best_text:
                     best_text = text
+
                 elif len(text) < len(best_text):
                     best_text = text
 
@@ -153,8 +138,13 @@ class BigBasketProvider(BaseProvider):
 
         with sync_playwright() as p:
 
+            # IMPORTANT:
+            # Render runs on a headless Linux server
+            # without a graphical X server.
+            #
+            # Therefore this MUST be headless=True.
             browser = p.chromium.launch(
-                headless=False
+                headless=True
             )
 
             page = browser.new_page(
@@ -191,9 +181,6 @@ class BigBasketProvider(BaseProvider):
                         if not href:
                             continue
 
-                        # Avoid processing the same product
-                        # twice because BigBasket often has
-                        # separate image/name links.
                         product_match = re.search(
                             r"/pd/(\d+)/",
                             href,
@@ -253,12 +240,10 @@ class BigBasketProvider(BaseProvider):
                 # when available.
                 candidates.sort(
                     key=lambda item: (
-                        "taaza milk" not in item[
-                            "text"
-                        ].lower(),
-                        "pouch" not in item[
-                            "text"
-                        ].lower(),
+                        "taaza milk"
+                        not in item["text"].lower(),
+                        "pouch"
+                        not in item["text"].lower(),
                     )
                 )
 
