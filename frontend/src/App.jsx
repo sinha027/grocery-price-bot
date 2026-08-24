@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 
-const API_URL = "https://grocery-price-bot-backend-vivek.onrender.com";
+const API_URL = "http://127.0.0.1:8000";
 
 const PLATFORM_META = {
   Blinkit: { icon: "⚡", className: "blinkit" },
@@ -20,8 +20,29 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  function handleSearchChange(event) {
+    const value = event.target.value;
+
+    // Allow only letters, numbers and spaces.
+    const cleaned = value.replace(/[^a-zA-Z0-9 ]/g, "");
+
+    setSearch(cleaned);
+  }
+
+  function handleLocationChange(event) {
+    const value = event.target.value;
+
+    // PIN code: numbers only, maximum 6 digits.
+    const cleaned = value.replace(/\D/g, "").slice(0, 6);
+
+    setLocation(cleaned);
+  }
+
   async function comparePrices() {
-    if (!search.trim()) {
+    const product = search.trim();
+    const pin = location.trim();
+
+    if (!product) {
       setResult({
         success: false,
         message: "Enter a product name to start comparing.",
@@ -29,10 +50,18 @@ function App() {
       return;
     }
 
-    if (!location.trim()) {
+    if (!/^[a-zA-Z0-9 ]+$/.test(product)) {
       setResult({
         success: false,
-        message: "Enter your PIN code to check local availability.",
+        message: "Product name can contain only letters, numbers and spaces.",
+      });
+      return;
+    }
+
+    if (!/^\d{6}$/.test(pin)) {
+      setResult({
+        success: false,
+        message: "Enter a valid 6-digit PIN code.",
       });
       return;
     }
@@ -43,15 +72,13 @@ function App() {
     try {
       const url =
         `${API_URL}/compare` +
-        `?search=${encodeURIComponent(search)}` +
-        `&location=${encodeURIComponent(location)}`;
+        `?search=${encodeURIComponent(product)}` +
+        `&location=${encodeURIComponent(pin)}`;
 
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(
-          `Backend request failed with status ${response.status}`
-        );
+        throw new Error(`Backend request failed: ${response.status}`);
       }
 
       const data = await response.json();
@@ -102,15 +129,21 @@ function App() {
               No account required
             </span>
 
-            <span className="vivek-watermark">
+            <a
+              href="https://www.linkedin.com/in/sinha027/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="vivek-watermark"
+              aria-label="Built by Vivek Sinha on LinkedIn"
+            >
               <span className="creator-name">
                 Built by Vivek Sinha
               </span>
 
               <span className="creator-link">
-                · Live comparison
+                · LinkedIn ↗
               </span>
-            </span>
+            </a>
           </div>
         </div>
       </nav>
@@ -119,9 +152,6 @@ function App() {
 
       <main>
         <section className="hero">
-          <div className="hero-glow glow-one"></div>
-          <div className="hero-glow glow-two"></div>
-
           <div className="hero-content">
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
@@ -153,11 +183,11 @@ function App() {
                   <input
                     type="text"
                     value={search}
-                    onChange={(event) =>
-                      setSearch(event.target.value)
-                    }
+                    onChange={handleSearchChange}
                     onKeyDown={handleKeyDown}
                     placeholder="Try “Amul Taaza Milk 1L”"
+                    autoComplete="off"
+                    inputMode="text"
                   />
                 </div>
               </div>
@@ -177,12 +207,13 @@ function App() {
                   <input
                     type="text"
                     value={location}
-                    onChange={(event) =>
-                      setLocation(event.target.value)
-                    }
+                    onChange={handleLocationChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Enter PIN code"
+                    placeholder="Enter 6-digit PIN"
                     maxLength={6}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="postal-code"
                   />
                 </div>
               </div>
@@ -342,8 +373,7 @@ function ComparisonResult({ result }) {
 
             {result.product?.quantity && (
               <>
-                {result.product.quantity}
-                {" "}
+                {result.product.quantity}{" "}
               </>
             )}
 
@@ -396,9 +426,7 @@ function ComparisonResult({ result }) {
             {result.maximum_saving > 0 && (
               <div className="saving-pill">
                 Save ₹
-                {Number(
-                  result.maximum_saving
-                ).toFixed(2)}
+                {Number(result.maximum_saving).toFixed(2)}
               </div>
             )}
           </div>
